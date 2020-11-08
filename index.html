@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <link href="https://unpkg.com/tailwindcss@^1.9/dist/tailwind.min.css"
+        rel="stylesheet">
+  <link rel="stylesheet"
+        href="codemirror/lib/codemirror.css">
+  <link rel="stylesheet"
+        href="codemirror/theme/dracula.css">
+  <script src="codemirror/lib/codemirror.js"></script>
+  <script src="codemirror/mode/javascript/javascript.js"></script>
+  <script src="codemirror/mode/xml/xml.js"></script>
+  <script src="codemirror/mode/css/css.js"></script>
+  <script src="codemirror/mode/htmlmixed/htmlmixed.js"></script>
+  <script src="codemirror/addon/edit/closebrackets.js"></script>
+  <script src="codemirror/addon/edit/closetag.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.x.x/dist/alpine.min.js"
+          defer></script>
+
+</head>
+
+<body></body>
+<div x-data="{ tab: 'html'}">
+  <button @click="tab = 'html'">Html</button>
+  <button @click="tab = 'js'">JS</button>
+  <button @click="tab = 'css'">CSS</button>
+  <div x-show="tab === 'html'">
+    <h1>HTML</h1>
+    <textarea id="html"></textarea>
+  </div>
+  <div x-show="tab === 'js'">
+    <h1>Javascript</h1>
+    <textarea id="javascript"></textarea>
+  </div>
+  <div x-show="tab === 'css'">
+    <h1>CSS</h1>
+    <textarea id="css"></textarea>
+  </div>
+</div>
+<script>
+  const htmlTa = document.getElementById(`html`);
+  const htmlEditor = CodeMirror.fromTextArea(htmlTa, {
+    lineNumbers: true,
+    mode: "htmlmixed",
+    value: "<p>Hello</p>",
+    theme: "dracula",
+    autoCloseTags: true
+  });
+
+  const jsTa = document.getElementById(`javascript`);
+  const jsEditor = CodeMirror.fromTextArea(jsTa, {
+    lineNumbers: true,
+    mode: "javascript",
+    value: "let foo = 'var'",
+    theme: "dracula",
+    autoCloseBrackets: true
+  });
+
+
+  const cssTa = document.getElementById(`css`);
+  const cssEditor = CodeMirror.fromTextArea(cssTa, {
+    lineNumbers: true,
+    mode: "css",
+    value: ".class { color: white; }",
+    theme: "dracula",
+    autoCloseBrackets: true
+  });
+</script>
+
+</body>
+
+</html>
