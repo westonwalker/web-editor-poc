@@ -17,60 +17,141 @@
   <script src="codemirror/mode/xml/xml.js"></script>
   <script src="codemirror/mode/css/css.js"></script>
   <script src="codemirror/mode/htmlmixed/htmlmixed.js"></script>
+  <script src="codemirror/addon/fold/xml-fold.js"></script>
   <script src="codemirror/addon/edit/closebrackets.js"></script>
   <script src="codemirror/addon/edit/closetag.js"></script>
+  <script src="codemirror/addon/edit/matchtags.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.x.x/dist/alpine.min.js"
           defer></script>
+  <style>
+    .CodeMirror {
+      height: calc(100vh - 50px);
+    }
 
+    .iframePreview {
+      height: calc(100vh - 50px);
+    }
+  </style>
 </head>
 
-<body></body>
-<div x-data="{ tab: 'html'}">
-  <button @click="tab = 'html'">Html</button>
-  <button @click="tab = 'js'">JS</button>
-  <button @click="tab = 'css'">CSS</button>
-  <div x-show="tab === 'html'">
-    <h1>HTML</h1>
-    <textarea id="html"></textarea>
+<body>
+  <div class="flex bg-gray-900">
+    <div class="w-1/2 text-white"
+         x-data="{ tab: 'html'}">
+      <button @click="tab = 'html'">Html</button>
+      <button @click="tab = 'js'">JS</button>
+      <button @click="tab = 'css'">CSS</button>
+      <button id="save">Save</button>
+      <div x-show="tab === 'html'">
+        <h1>HTML</h1>
+        <textarea id="html"></textarea>
+      </div>
+      <div x-show="tab === 'js'">
+        <h1>Javascript</h1>
+        <textarea id="javascript"></textarea>
+      </div>
+      <div x-show="tab === 'css'">
+        <h1>CSS</h1>
+        <textarea id="css"></textarea>
+      </div>
+    </div>
+    <div class="w-1/2 mt-12 iframePreview">
+      <iframe id="preview"
+              title="Preview"
+              class="w-full h-full bg-white"
+              sandbox="allow-popups-to-escape-sandbox allow-scripts allow-popups allow-forms allow-pointer-lock allow-top-navigation allow-modals"
+              style=""></iframe>
+    </div>
   </div>
-  <div x-show="tab === 'js'">
-    <h1>Javascript</h1>
-    <textarea id="javascript"></textarea>
-  </div>
-  <div x-show="tab === 'css'">
-    <h1>CSS</h1>
-    <textarea id="css"></textarea>
-  </div>
-</div>
-<script>
-  const htmlTa = document.getElementById(`html`);
-  const htmlEditor = CodeMirror.fromTextArea(htmlTa, {
-    lineNumbers: true,
-    mode: "htmlmixed",
-    value: "<p>Hello</p>",
-    theme: "dracula",
-    autoCloseTags: true
-  });
 
-  const jsTa = document.getElementById(`javascript`);
-  const jsEditor = CodeMirror.fromTextArea(jsTa, {
-    lineNumbers: true,
-    mode: "javascript",
-    value: "let foo = 'var'",
-    theme: "dracula",
-    autoCloseBrackets: true
-  });
+  <script>
+    let iframeTemplate = `
+<!DOCTYPE html>
+  <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      {EXTERNAL_CSS}
+      <style>
+        {EDITOR_CSS}
+      </style>
+  </head>
+
+  <body>
+    {EDITOR_HTML}
+    {EXTERNAL_JS}
+    <script>
+      {EDITOR_JS} 
+    <\/script>
+  <\/body> 
+</html>`;
+
+    const htmlTa = document.getElementById(`html`);
+    const htmlEditor = CodeMirror.fromTextArea(htmlTa, {
+      lineNumbers: true,
+      mode: "htmlmixed",
+      value: "<p>Hello</p>",
+      theme: "dracula",
+      autoCloseTags: true,
+      matchTags: { bothTags: true },
+    });
+
+    const jsTa = document.getElementById(`javascript`);
+    const jsEditor = CodeMirror.fromTextArea(jsTa, {
+      lineNumbers: true,
+      mode: "javascript",
+      value: "let foo = 'var'",
+      theme: "dracula",
+      autoCloseBrackets: true
+    });
 
 
-  const cssTa = document.getElementById(`css`);
-  const cssEditor = CodeMirror.fromTextArea(cssTa, {
-    lineNumbers: true,
-    mode: "css",
-    value: ".class { color: white; }",
-    theme: "dracula",
-    autoCloseBrackets: true
-  });
-</script>
+    const cssTa = document.getElementById(`css`);
+    const cssEditor = CodeMirror.fromTextArea(cssTa, {
+      lineNumbers: true,
+      mode: "css",
+      value: ".class { color: white; }",
+      theme: "dracula",
+      autoCloseBrackets: true
+    });
+
+    let previewFrame = document.getElementById('preview')
+    let message = {
+      html: htmlTa.value,
+      css: jsTa.value,
+      js: cssTa.value
+    };
+    previewFrame.contentWindow.postMessage(message, '*');
+
+    document.getElementById('save').onclick = function () {
+      // message = {
+      //   html: htmlEditor.getValue(),
+      //   css: cssEditor.getValue(),
+      //   js: jsEditor.getValue()
+      // };
+      // previewFrame.contentWindow.postMessage(message, '*'); 
+      let newIframeContent = iframeTemplate;
+      newIframeContent = newIframeContent.replace('{EXTERNAL_CSS}', '<link href="https://unpkg.com/tailwindcss@^1.8/dist/tailwind.min.css" rel="stylesheet">')
+      newIframeContent = newIframeContent.replace('{EDITOR_CSS}', cssEditor.getValue())
+      newIframeContent = newIframeContent.replace('{EDITOR_HTML}', htmlEditor.getValue())
+      newIframeContent = newIframeContent.replace('{EXTERNAL_JS}', '<script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.x.x/dist/alpine.min.js"defer><\/script>')
+      newIframeContent = newIframeContent.replace('{EDITOR_JS}', jsEditor.getValue())
+      previewFrame.srcdoc = newIframeContent;
+    };
+    document.addEventListener("keydown", function (e) {
+      if ((window.navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey) && e.keyCode == 83) {
+        e.preventDefault();
+
+        let newIframeContent = iframeTemplate;
+        newIframeContent = newIframeContent.replace('{EXTERNAL_CSS}', '<link href="https://unpkg.com/tailwindcss@^1.8/dist/tailwind.min.css" rel="stylesheet">')
+        newIframeContent = newIframeContent.replace('{EDITOR_CSS}', cssEditor.getValue())
+        newIframeContent = newIframeContent.replace('{EDITOR_HTML}', htmlEditor.getValue())
+        newIframeContent = newIframeContent.replace('{EXTERNAL_JS}', '<script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.x.x/dist/alpine.min.js"defer><\/script>')
+        newIframeContent = newIframeContent.replace('{EDITOR_JS}', jsEditor.getValue())
+        previewFrame.srcdoc = newIframeContent;
+      }
+    }, false);
+  </script>
 
 </body>
 
